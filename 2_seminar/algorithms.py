@@ -1,142 +1,216 @@
 import math
-
-##euklidska udaljenost
-##jednostavnije numpy.linalg.norm()
-def udaljenost(a, b):
-    sum = 0
-    for ai, bi in zip(a, b):
-        sum += (ai - bi) ** 2
-    return math.sqrt(sum)
+from abc import ABCMeta, abstractmethod
+from numpy.linalg import norm
+from random import sample
+from numpy import array, newaxis, empty
+from numpy.random import randint
 
 
-def iteracija(X, C, m, w):
-    brojnik = X[0]
-    for b in brojnik: b = 0
-    nazivnik = 0
-    noviC = set()
-    for cj in C:
-        for xi in X:
-            nazivnik += m(cj, xi)*w(xi)
-            for xij in xi:
-                xij *= m(cj, xi)*w(xi)
-            i = 0
-            for bi in brojnik:
-                bi += xi[i]
-                ++i
-        for b in brojnik:
-            b /= float(nazivnik)
-        noviC.add(brojnik)
-    return noviC
+class FindClusters(metaclass=ABCMeta):
+
+    @classmethod
+    @abstractmethod
+    def membership(cls, cluster, data_point, clusters):
+        ...
+
+    @classmethod
+    @abstractmethod
+    def weight(cls, data_point):
+        ...
+
+    @classmethod
+    @abstractmethod
+    def objective(cls, data_points, clusters):
+        ...
+
+    @staticmethod
+    def initialize_centroides_random(data_points, number_of_clusters):
+        centroids = [array([0., 0.])] * number_of_clusters
+        points_per_centroid = [0] * number_of_clusters
+        for point in data_points:
+            index = randint(0, number_of_clusters)
+            centroids[index] += point
+            points_per_centroid[index] += 1
+        # TODO: mozda bi trebalo napraviti provjeru da li je
+        # points_per_centroid uvijek > 0
+        return array(centroids) / array(points_per_centroid)[:, newaxis]
+        # return array([c/p for c, p in zip(centroids, points_per_centroid)])
+
+    @staticmethod
+    def initialize_centroides_forgy(data_points, number_of_clusters):
+        return data_points[randint(len(data_points), size=number_of_clusters)]
+
+    @classmethod
+    def recompute_centroids(cls, data_points, centroids):
+        # to su koraci 2 i 3
+        weights_array = array([cls.weight(data_point)
+                               for data_point in data_points])
+        #print(weights_array, len(weights_array))
+        for i in range(len(centroids)):
+            membership_array = array(
+                [cls.membership(centroids[i], point, centroids) for point in data_points])
+            #print(membership_array, len(membership_array))
+            coefficients_per_point = membership_array * weights_array
+            centroids[i] = sum(
+                data_points * coefficients_per_point[:, newaxis]) / sum(coefficients_per_point)
+
+        return centroids
+
+    @classmethod
+    def test_algorithm(cls, number_of_iterations, initial_centroides, data_points):
+        centroids = initial_centroides
+        for i in range(number_of_iterations):
+            print("Started", i, "iteration")
+            centroids = cls.recompute_centroids(data_points, centroids)
+        return centroids
 
 
-## K-means
+#
+#
+# ##euklidska udaljenost
+# ##jednostavnije numpy.linalg.norm()
+# def udaljenost(a, b):
+#     sum = 0
+#     for ai, bi in zip(a, b):
+#         sum += (ai - bi) ** 2
+#     return math.sqrt(sum)
+#
+#
+# def iteracija(data_points, clusters, m, w):
+#     brojnik = data_points[0]
+#     for b in brojnik: b = 0
+#     nazivnik = 0
+#     noviC = set()
+#     for cj in clusters:
+#         for xi in data_points:
+#             nazivnik += m(cj, xi)*w(xi)
+#             for xij in xi:
+#                 xij *= m(cj, xi)*w(xi)
+#             i = 0
+#             for bi in brojnik:
+#                 bi += xi[i]
+#                 ++i
+#         for b in brojnik:
+#             b /= float(nazivnik)
+#         noviC.add(brojnik)
+#     return noviC
 
-class KMeans():
 
-    def KMf(X, C):
+class KMeans(FindClusters):
+
+    @classmethod
+    def objective(cls, data_points, clusters):
         sum = 0
-        for x in X:
+        for x in data_points:
             min = math.inf
-            for c in C:
-                if udaljenost(x, c)**2 < min:
-                    min = udaljenost(x, c)**2
+            for c in clusters:
+                #distance = udaljenost(x, c)**2
+                distance = norm(x - c)
+                if distance < min:
+                    min = distance
             sum += min
         return sum
 
-
-    def KMm(C, cj, xi):
-        min = udaljenost(cj, xi)**2
-        for c in C:
-            if udaljenost(c, xi)**2 < min:
+    @classmethod
+    def membership(cls, cluster, data_point, clusters):
+        #min = udaljenost(cj, xi)**2
+        min = norm(cluster - data_point)
+        for c in clusters:
+            # if udaljenost(c, xi)**2 < min:
+            if norm(c - data_point) < min:
                 return 0
         return 1
 
-
-    def KMw(xi):
-        return 1
-
-## GEM
-
-class GaussianExpectationMaximization():
-    ## p - Gauss
-    def p(c):
-        return norm(c, 1).pdf(x)
-
-    def p2(x,c):
-        return ##nez
-
-
-    def GEMf(X, C):
-        rez = 0
-        for x in X:
-            b = 0
-            for c in C:
-                b += p2(x, c)*p(c)
-            rez += math.log(b)
-        return -rez
-
-
-    def GEMm(cj, xi):
-        return p2(xi, cj)*p(cj)/p(xi)
-
-
-    def GEMw(xi):
+    @classmethod
+    def weight(cls, data_point):
         return 1
 
 
-##FKM
-
-class FuzzyKMeans():
-
-    def FKMf(U, X, C):
-        rez = 0
-        for xi in X:
-            b = 0
-            for cj in C:
-                b += U[i][j] * udaljenost(xi, cj)**2
-            rez += b
-        return rez
-
-
-    def FKMm(r, C, cj, xi):
-        brojnik = udaljenost(xi, cj)**(-2/(r-1))
-        nazivnik = 0
-        for c in C:
-            nazivnik += udaljenost(xi, c)**(-2/(r-1))
-        return brojnik/nazivnik
-
-
-    def FKMw(xi):
-        return 1
-
-##KHM
-
-class KHarmonicMeans:
-    def KHMf(p, X, C):
-        rez = 0
-        for xi in X:
-            brojnik = len(C)
-            nazivnik = 0
-            for cj in C:
-                nazivnik += 1/(udaljenost(xi, cj)**p)
-        rez += brojnik/nazivnik
-        return rez
-
-
-    def KHMm(p, C, cj, xi):
-        brojnik = udaljenost(xi, cj)**(-p-2)
-        nazivnik = 0
-        for c in C:
-            nazivnik += udaljenost(xi, c)**(-p-2)
-        return brojnik/nazivnik
-
-
-    def KHMw(p, C, xi):
-        brojnik = 0
-        for c in C:
-            brojnik += udaljenost(xi, c)**(-p-2)
-        nazivnik = 0
-        for c in C:
-            nazivnik += udaljenost(xi, c)**(-p)
-        nazivnik **= 2
-        return brojnik/nazivnik
+# class GaussianExpectationMaximization():
+#     ## p - Gauss
+#     #TODO: to mi se cini da je 1/broj centroida
+#     def p(c):
+#         return norm(c, 1).pdf(x)
+#
+#     #TODO: vjerojatnost da je tocka x generirana gausovom distribucijom
+#     def p2(x,c):
+#         # TODO: to jos treba napisati
+#         return None
+#
+#
+#     def objective(data_points, clusters):
+#         rez = 0
+#         for x in data_points:
+#             b = 0
+#             for c in clusters:
+#                 b += p2(x, c)*p(c)
+#             rez += math.log(b)
+#         return -rez
+#
+#
+#     def membership(cj, xi):
+#         return p2(xi, cj)*p(cj)/p(xi)
+#
+#
+#     def weight(xi):
+#         return 1
+#
+#
+# ##FKM
+#
+# class FuzzyKMeans():
+#     fuzziness = 1
+#
+#     def objective(U, data_points, clusters):
+#         rez = 0
+#         for xi in data_points:
+#             b = 0
+#             for cj in clusters:
+#                 # TODO: tu je U membership?!?!?!?
+#                 b += U[i][j]**fuzziness * udaljenost(xi, cj)**2
+#             rez += b
+#         return rez
+#
+#
+#     def membership(r, clusters, cj, xi):
+#         brojnik = udaljenost(xi, cj)**(-2/(r-1))
+#         nazivnik = 0
+#         for c in clusters:
+#             nazivnik += udaljenost(xi, c)**(-2/(r-1))
+#         return brojnik/nazivnik
+#
+#
+#     def weight(xi):
+#         return 1
+#
+# ##KHM
+#
+# class KHarmonicMeans:
+#     def objective(p, data_points, clusters):
+#         rez = 0
+#         for xi in data_points:
+#             brojnik = len(clusters)
+#             nazivnik = 0
+#             for cj in clusters:
+#                 nazivnik += 1/(udaljenost(xi, cj)**p)
+#         rez += brojnik/nazivnik
+#         return rez
+#
+#
+#     def membership(p, clusters, cj, xi):
+#         brojnik = udaljenost(xi, cj)**(-p-2)
+#         nazivnik = 0
+#         for c in clusters:
+#             nazivnik += udaljenost(xi, c)**(-p-2)
+#         return brojnik/nazivnik
+#
+#
+#     def weight(p, clusters, xi):
+#         brojnik = 0
+#         for c in clusters:
+#             brojnik += udaljenost(xi, c)**(-p-2)
+#         nazivnik = 0
+#         for c in clusters:
+#             nazivnik += udaljenost(xi, c)**(-p)
+#         nazivnik **= 2
+#         return brojnik/nazivnik
