@@ -14,14 +14,26 @@ class DataSet(metaclass=ABCMeta):
     def create_data_points(self):
         ...
 
+    def check_true_centroids(self, calculated_centroids):
+        number_of_guessed = 0
+        for centroid in self.centroids:
+            for calculated_centroid in calculated_centroids:
+                if distance(centroid, calculated_centroid < critical_distance):
+                    number_of_guessed += 1
+                    break
+
+        return number_of_guessed
+
     def create_point(self, mean, covariance, number_of_points):
         return multivariate_normal(mean, covariance, number_of_points)
 
 
-class PellegMoore(DataSet):
-    coefficient = 0.012
 
+class PellegMoore(DataSet):
     """Class for constructing dataset for testing clustering algorithms ."""
+
+    coefficient = 0.012
+    critical_distance = 2
 
     def __init__(self, dimension=2, number_of_points=2500, number_of_clusters=50, deviation_coefficient=0.012):
         self.__dict__.update(locals())
@@ -39,9 +51,14 @@ class PellegMoore(DataSet):
         self.data_points = array([self.create_point(self.centroids[randint(
             0, self.number_of_clusters)], cov, 1)[0] for i in range(self.number_of_points)])
 
+    #def check_true_centroids()
+
+
 
 class BIRCH(DataSet):
     """Class for constructing dataset for testing clustering algorithms ."""
+
+    critical_distance = 0.2
 
     def __init__(self, dimensions=(10, 10), number_of_points_per_cluster=100,
                  distance_between_clusters=4 * sqrt(2), cluster_radius=sqrt(2)):
