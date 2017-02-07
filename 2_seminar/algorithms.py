@@ -2,7 +2,7 @@ import math
 from abc import ABCMeta, abstractmethod
 from numpy.linalg import norm
 from random import sample
-from numpy import array, newaxis, empty
+from numpy import array, newaxis, zeros
 from numpy.random import randint
 
 
@@ -25,7 +25,7 @@ class FindClusters(metaclass=ABCMeta):
 
     @staticmethod
     def initialize_centroides_random(data_points, number_of_clusters):
-        centroids = [array([0., 0.])] * number_of_clusters
+        centroids = [zeros(len(data_points[0]))] * number_of_clusters
         points_per_centroid = [0] * number_of_clusters
         for point in data_points:
             index = randint(0, number_of_clusters)
@@ -51,9 +51,24 @@ class FindClusters(metaclass=ABCMeta):
                 [cls.membership(centroids[i], point, centroids) for point in data_points])
             #print(membership_array, len(membership_array))
             coefficients_per_point = membership_array * weights_array
-            centroids[i] = sum(
-                data_points * coefficients_per_point[:, newaxis]) / sum(coefficients_per_point)
+            suma = sum(coefficients_per_point)
+            if(suma == 0):
+                centroids[i] = 0
+            else:
+                centroids[i] = sum(
+                    data_points * coefficients_per_point[:, newaxis]) / sum(coefficients_per_point)
 
+        return centroids
+
+    @classmethod
+    def test_algorithm_yield(cls, number_of_iterations, initial_centroides, data_points):
+        centroids = initial_centroides
+        print("initial_centroides")
+        yield centroids
+        for i in range(number_of_iterations):
+            print("Started", i, "iteration")
+            centroids = cls.recompute_centroids(data_points, centroids)
+            yield centroids
         return centroids
 
     @classmethod

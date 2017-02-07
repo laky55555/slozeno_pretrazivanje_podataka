@@ -1,7 +1,9 @@
 from abc import ABCMeta, abstractmethod
 from math import sqrt
 from numpy.random import multivariate_normal, rand, randint
+from numpy.linalg import norm
 from numpy import array, identity, sum, mean
+from algorithms import KMeans
 
 
 class DataSet(metaclass=ABCMeta):
@@ -14,26 +16,18 @@ class DataSet(metaclass=ABCMeta):
     def create_data_points(self):
         ...
 
-    def check_true_centroids(self, calculated_centroids):
-        number_of_guessed = 0
-        for centroid in self.centroids:
-            for calculated_centroid in calculated_centroids:
-                if distance(centroid, calculated_centroid < critical_distance):
-                    number_of_guessed += 1
-                    break
-
-        return number_of_guessed
+    @abstractmethod
+    def check_calculated_centroids(self, calculated_centroids):
+        ...
 
     def create_point(self, mean, covariance, number_of_points):
         return multivariate_normal(mean, covariance, number_of_points)
 
 
-
 class PellegMoore(DataSet):
     """Class for constructing dataset for testing clustering algorithms ."""
 
-    coefficient = 0.012
-    critical_distance = 2
+    coefficient = 0.00012
 
     def __init__(self, dimension=2, number_of_points=2500, number_of_clusters=50, deviation_coefficient=0.012):
         self.__dict__.update(locals())
@@ -51,14 +45,19 @@ class PellegMoore(DataSet):
         self.data_points = array([self.create_point(self.centroids[randint(
             0, self.number_of_clusters)], cov, 1)[0] for i in range(self.number_of_points)])
 
-    #def check_true_centroids()
+    def check_calculated_centroids(self, calculated_centroids):
+        score = KMeans.objective(self.data_points, calculated_centroids)/KMeans.objective(self.data_points, self.centroids)
+        print("True centroids =", KMeans.objective(self.data_points, self.centroids))
+        print("Calculated centroids =", KMeans.objective(self.data_points, calculated_centroids))
+        print("Clustering score =", score)
+        return score
 
 
 
 class BIRCH(DataSet):
     """Class for constructing dataset for testing clustering algorithms ."""
 
-    critical_distance = 0.2
+    critical_distance = 1
 
     def __init__(self, dimensions=(10, 10), number_of_points_per_cluster=100,
                  distance_between_clusters=4 * sqrt(2), cluster_radius=sqrt(2)):
@@ -88,10 +87,19 @@ class BIRCH(DataSet):
             self.data_points.extend(self.create_point(
                 i, cov, self.number_of_points_per_cluster))
         self.data_points = array(self.data_points)
-    # def create_point(self, centroid):
-    #     mean = centroid
-    #     cov = identity(len(self.dimensions)) # [[1, 0], [0, 1]]
-    # return multivariate_normal(mean, cov, self.number_of_points_per_cluster)
+
+    def check_calculated_centroids(self, calculated_centroids):
+        number_of_guessed = 0
+        for centroid in self.centroids:
+            for calculated_centroid in calculated_centroids:
+                if (norm(centroid - calculated_centroid) < self.critical_distance):
+                    number_of_guessed += 1
+                    break
+
+        print("Number of found centroids =", number_of_guessed)
+        print("Percentage is:", number_of_guessed/len(calculated_centroids)*100)
+        return number_of_guessed
+
 
     def test_data(self, print_radius=False):
         sums_per_cluster = []
