@@ -1,10 +1,15 @@
 from math import sqrt
-from numpy.random import multivariate_normal
-from numpy import array, sum, mean, identity
+from numpy.linalg import norm
+from numpy import array, identity, sum, mean
+
+from algorithms import KMeans
+from .data_set import DataSet
 
 
-class BIRCH():
+class BIRCH(DataSet):
     """Class for constructing dataset for testing clustering algorithms ."""
+
+    critical_distance = 1
 
     def __init__(self, dimensions=(10, 10), number_of_points_per_cluster=100,
                  distance_between_clusters=4 * sqrt(2), cluster_radius=sqrt(2)):
@@ -29,13 +34,34 @@ class BIRCH():
 
     def create_data_points(self):
         self.data_points = []
+        cov = identity(len(self.dimensions))  # [[1, 0], [0, 1]]
         for i in self.centroids:
-            self.data_points.extend(self.create_point(i))
+            self.data_points.extend(self.create_point(
+                i, cov, self.number_of_points_per_cluster))
+        self.data_points = array(self.data_points)
 
-    def create_point(self, centroid):
-        mean = centroid
-        cov = identity(len(self.dimensions)) # [[1, 0], [0, 1]]
-        return multivariate_normal(mean, cov, self.number_of_points_per_cluster)
+    def check_calculated_centroids(self, calculated_centroids):
+        number_of_guessed = 0
+        for centroid in self.centroids:
+            for calculated_centroid in calculated_centroids:
+                if (norm(centroid - calculated_centroid) < self.critical_distance):
+                    number_of_guessed += 1
+                    break
+
+        self.log_data = {
+            'centroids': number_of_guessed,
+            'percentage': number_of_guessed / len(calculated_centroids) * 100
+        }
+
+        return number_of_guessed
+
+    def print_log_data(self):
+        print("""
+        Number of found centroids = %d
+        Percentage is: %f""" % (
+            self.log_data['centroids'],
+            self.log_data['percentage']
+        ))
 
     def test_data(self, print_radius=False):
         sums_per_cluster = []
@@ -52,5 +78,6 @@ class BIRCH():
 
         if(print_radius):
             print("Radius per centroids = ", sums_per_cluster)
-        print("Average cluster radius = ", sum(
-            sums_per_cluster) / len(sums_per_cluster))
+        average = sum(sums_per_cluster) / len(sums_per_cluster)
+        print("Average cluster radius = ", average)
+        return average
