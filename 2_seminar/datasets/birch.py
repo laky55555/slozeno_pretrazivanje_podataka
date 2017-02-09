@@ -58,7 +58,8 @@ class BIRCH(DataSet):
     def print_log_data(self):
         print("""
         Number of found centroids = %d
-        Percentage is: %f""" % (
+        Percentage is: %f
+        """ % (
             self.log_data['centroids'],
             self.log_data['percentage']
         ))

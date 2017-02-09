@@ -32,7 +32,7 @@ def main():
     algorithms = {}
     __algorithm_commands = {
         '--kmeans': 'K-Means',
-        '--gme': 'Gaussian Expectation Maximization'
+        '--gem': 'Gaussian Expectation Maximization'
     }
 
 
