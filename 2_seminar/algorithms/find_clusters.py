@@ -12,7 +12,7 @@ class FindClusters(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def weight(cls, data_point):
+    def weight(cls, data_point, clusters):
         ...
 
     @classmethod
@@ -40,7 +40,7 @@ class FindClusters(metaclass=ABCMeta):
     @classmethod
     def recompute_centroids(cls, data_points, centroids):
         # to su koraci 2 i 3
-        weights_array = array([cls.weight(data_point)
+        weights_array = array([cls.weight(data_point, centroids)
                                for data_point in data_points])
         #print(weights_array, len(weights_array))
         for i in range(len(centroids)):

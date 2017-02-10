@@ -5,8 +5,8 @@ import json
 
 import matplotlib.pyplot as plt
 
-from algorithms import FindClusters, KMeans, GaussianExpectationMaximization
-from datasets import PellegMoore, BIRCH
+from algorithms import *
+from datasets import *
 
 
 def main():
@@ -27,12 +27,20 @@ def main():
 
     _algorithms = {
         'K-Means': KMeans,
-        'Gaussian Expectation Maximization': GaussianExpectationMaximization
+        'Gaussian Expectation Maximization': GaussianExpectationMaximization,
+        'K-harmonic means': KHarmonicMeans,
+        'Fuzzy K-Means': FuzzyKMeans,
+        'Hybrid1': Hybrid1,
+        'Hybrid2': Hybrid2
     }
     algorithms = {}
     __algorithm_commands = {
         '--kmeans': 'K-Means',
-        '--gem': 'Gaussian Expectation Maximization'
+        '--gem': 'Gaussian Expectation Maximization',
+        '--khm': 'K-harmonic means',
+        '--fkm': 'Fuzzy K-Means',
+        '--h1': 'Hybrid1',
+        '--h2': 'Hybrid2'
     }
 
 

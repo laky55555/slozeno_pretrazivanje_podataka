@@ -4,7 +4,7 @@ from .find_clusters import FindClusters
 
 
 class GaussianExpectationMaximization(FindClusters):
-    covariance = 1
+    covariance = 0.012
 
     # p - Gauss
     @classmethod
@@ -46,5 +46,5 @@ class GaussianExpectationMaximization(FindClusters):
         )
 
     @classmethod
-    def weight(cls, data_point):
+    def weight(cls, data_point, clusters):
         return 1

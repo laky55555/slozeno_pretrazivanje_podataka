@@ -25,5 +25,5 @@ class KMeans(FindClusters):
         return 1
 
     @classmethod
-    def weight(cls, data_point):
+    def weight(cls, data_point, clusters):
         return 1
