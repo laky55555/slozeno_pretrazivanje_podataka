@@ -4,7 +4,7 @@ from .find_clusters import FindClusters
 
 
 class FuzzyKMeans(FindClusters):
-    fuzziness = 2
+    fuzziness = 1.3
 
     @staticmethod
     def helper(data_point, clusters, number = 0):

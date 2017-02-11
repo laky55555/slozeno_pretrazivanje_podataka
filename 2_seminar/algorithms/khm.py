@@ -4,7 +4,7 @@ from .find_clusters import FindClusters
 
 
 class KHarmonicMeans(FindClusters):
-    p = 2
+    p = 3.5
 
     @staticmethod
     def helper(data_point, clusters, number = 0):
