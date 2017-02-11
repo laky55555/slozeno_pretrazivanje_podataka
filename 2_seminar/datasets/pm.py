@@ -8,7 +8,7 @@ from .data_set import DataSet
 class PellegMoore(DataSet):
     """Class for constructing dataset for testing clustering algorithms ."""
     # coefficient = 0.00012
-    coefficient = 0.012
+    coefficient = 0.0012
 
     def __init__(self, dimension=2, number_of_points=2500, number_of_clusters=50, deviation_coefficient=0.012):
         self.__dict__.update(locals())
