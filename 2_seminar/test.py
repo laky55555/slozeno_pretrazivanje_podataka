@@ -12,16 +12,18 @@ from datasets import *
 def main():
     interactive = False
     folder = 'tests'
+    pdf = False
 
 
     _datasets = {
         'BIRCH': BIRCH,
-        'PellegMoore': PellegMoore
+        'PellegMoore': PellegMoore,
     }
     datasets = {}
     __dataset_commands = {
         '--birch': 'BIRCH',
-        '--pellegmoore': 'PellegMoore'
+        '--pellegmoore': 'PellegMoore',
+        '--pm': 'PellegMoore'
     }
 
 
@@ -36,6 +38,7 @@ def main():
     algorithms = {}
     __algorithm_commands = {
         '--kmeans': 'K-Means',
+        '--km': 'K-Means',
         '--gem': 'Gaussian Expectation Maximization',
         '--khm': 'K-harmonic means',
         '--fkm': 'Fuzzy K-Means',
@@ -57,6 +60,9 @@ def main():
     # show plots when generated
     if '--interactive' in sys.argv[1:]:
         interactive = True
+
+    if '--pdf' in sys.argv[1:]:
+        pdf = True
 
     # number of iterations per algorithm
     iterations = 40
@@ -144,16 +150,29 @@ def main():
                 for step, i in enumerate(solution_yield):
                     dataset.check_calculated_centroids(i)
                     plt.figure()
-                    plt.plot(
+                    plt.scatter(
                         dataset.data_points.T[0],
                         dataset.data_points.T[1],
-                        'g^',
+                        c='#51975f',
+                        marker='^',
+                        edgecolor='#3B8049',
+                        alpha=0.3
+                    )
+
+                    plt.scatter(
                         dataset.centroids.T[0],
                         dataset.centroids.T[1],
-                        'ro',
+                        c='#DB3B3B',
+                        marker='o',
+                        edgecolor='#C73131'
+                    )
+
+                    plt.scatter(
                         i.T[0],
                         i.T[1],
-                        'bs'
+                        c='#064291',
+                        marker='s',
+                        edgecolor='#123D75'
                     )
 
                     log_data = dataset.log_data
@@ -172,6 +191,10 @@ def main():
                         )
 
                     number = "%03d" % step
+
+                    if pdf:
+                        plt.savefig(algorithm_folder + '/' + number + '.pdf')
+                    
                     plt.savefig(algorithm_folder + '/' + number + '.jpg')
 
                     if interactive:
